@@ -47,26 +47,26 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    START([fetchEventsForUsers]) --> GET_USERS["processUserData( user_id )"]
+    START([fetchEventsForUsers]) --> GET_USERS["processUserData user_id"]
     GET_USERS --> USERS_SOURCE{"user_id given?"}
-    USERS_SOURCE -->|Yes| ONE["Get/update 1 user from Get-in API\n(user-details)"]
-    USERS_SOURCE -->|No (cron)| ALL["prisma.creators.findMany()\n(all users in DB)"]
+    USERS_SOURCE -->|Yes| ONE["Get or update 1 user from Get-in API - user-details"]
+    USERS_SOURCE -->|No cron| ALL["prisma.creators.findMany - all users in DB"]
     ONE --> LOOP
     ALL --> LOOP
 
-    LOOP["For each user"] --> MARK["markeUsersProcessing( user, isCron )"]
-    MARK --> UPDATE_ALL["updateEventStatusAfterProcessing( user_id, isCron )"]
+    LOOP["For each user"] --> MARK["markeUsersProcessing user, isCron"]
+    MARK --> UPDATE_ALL["updateEventStatusAfterProcessing user_id, isCron"]
     UPDATE_ALL --> LOOP
     LOOP --> DONE([Done])
 
     subgraph markeUsersProcessing
         direction TB
-        M1["POST Get-in: /events/dashboard\n→ events + seller_events"] --> M2["processEventData for each\n→ prisma.events create/update"]
+        M1["POST Get-in: events/dashboard - events and seller_events"] --> M2["processEventData for each - prisma.events create or update"]
         M2 --> M3["syncAddons for each event"]
-        M3 --> M4["prisma.events.findMany\n(live: end_date > now)"]
-        M4 --> M5["For each live event:\nskip if already completed/in-progress\nelse set InProgress"]
-        M5 --> M6["fetchAndUpsertAttendeesBatchWise( eventId, ... )"]
-        M6 --> M7["finally: set sync_status + cron_status = Completed"]
+        M3 --> M4["prisma.events.findMany - live events end_date gt now"]
+        M4 --> M5["For each live event: skip if completed or in-progress, else set InProgress"]
+        M5 --> M6["fetchAndUpsertAttendeesBatchWise eventId"]
+        M6 --> M7["finally: set sync_status and cron_status to Completed"]
     end
 ```
 
@@ -82,17 +82,17 @@ flowchart LR
     subgraph Backend
         F["fetchAndUpsertAttendeesBatchWise"]
     end
-    subgraph Get_in_API["Get-in API"]
-        P["POST /api/scanner-app/attendees/list\nbody: { event_id }\nquery: auth-user-id, scanner-api-key"]
+    subgraph GetInAPI["Get-in API"]
+        P["POST attendees/list - body event_id - query auth-user-id, scanner-api-key"]
     end
-    subgraph DB["Scanner DB (Supabase)"]
+    subgraph DB["Scanner DB Supabase"]
         EV["events"]
         AT["attendee"]
         AO["attendee_add_ons"]
     end
 
     F --> P
-    P -->|participants[]| F
+    P -->|participants| F
     F --> EV
     F --> AT
     F --> AO
