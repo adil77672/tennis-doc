@@ -167,6 +167,14 @@ flowchart TB
 
 All use **SCANNER_API_KEY** and **BACKEND_API_URL** from env.
 
+**Testing (e.g. curl):** Attendees list requires a JSON body with `event_id`. Empty body can return "This action is unauthorized".
+
+```bash
+curl -X POST 'https://api.getin-nextgen.com/api/scanner-app/attendees/list?auth-user-id=14462&scanner-api-key=YOUR_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{"event_id": 12803}'
+```
+
 ---
 
 ## 8. Quick reference
